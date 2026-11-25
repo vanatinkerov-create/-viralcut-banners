@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ViralCut — вирусные нарезки из длинных видео</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+  <link rel="stylesheet" id="customFontsCss" href="/api/fonts.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%238b5cf6'/%3E%3Cpath d='M18 5 9 18h6l-1 9 9-13h-6l1-9z' fill='white'/%3E%3C/svg%3E" />
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="brand-mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M13 2 4.5 14H11l-1 8 8.5-12H12l1-8z" fill="white" stroke="none"/>
+          </svg>
+        </span>
+        ViralCut
+      </div>
+
+      <button class="btn-new" id="newBtn">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        Новый проект
+      </button>
+
+      <button class="btn-new" id="streamBtn">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg>
+        Прямой эфир
+      </button>
+
+      <button class="btn-new" id="bannersBtn" type="button">Реклама / Баннеры</button>
+      <div class="side-label">История</div>
+      <div class="project-list" id="projectList"></div>
+
+      <a class="update-card" id="updateCard" hidden target="_blank" rel="noopener">
+        <span class="update-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0 4-4m-4 4-4-4M5 19h14"/></svg>
+        </span>
+        <span class="update-text">
+          <b id="updateTitle">Доступно обновление</b>
+          <small id="updateSub">Скачать с GitHub</small>
+        </span>
+        <button class="update-hide" id="updateHide" type="button" title="Скрыть до следующей версии" aria-label="Скрыть до следующей версии">×</button>
+      </a>
+
+      <a class="tg-card" href="https://t.me/ivanAI22" data-external="https://t.me/ivanAI22" target="_blank" rel="noopener">
+        <span class="tg-ico">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.7 3.4 2.9 11.2c-.9.3-.9 1.5 0 1.8l4.6 1.6 1.7 5.4c.2.7 1.1.9 1.6.3l2.4-2.6 4.5 3.3c.6.4 1.5.1 1.7-.6l3-15.2c.2-.9-.7-1.6-1.5-1.3zM9.4 14.1l8.6-5.5-6.8 7-.2 3.1-1.6-4.6z"/></svg>
+        </span>
+        <span class="tg-text"><b>Telegram-канал</b><small>@ivanAI22 · обновления и примеры</small></span>
+        <span class="tg-arrow">↗</span>
+      </a>
+
+      <div class="side-foot">
+        <button class="settings-btn" id="settingsBtn" type="button">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+          Настройки
+        </button>
+        <div class="health" id="health"><span class="dot"></span><span id="healthText">Проверка движка…</span></div>
+        <div class="hint">Всё обрабатывается локально на этом компьютере. Видео никуда не отправляется.</div>
+      </div>
+    </aside>
+
+    <main class="main" id="main"></main>
+  </div>
+
+  <div class="hud" id="sysCard">
+    <button class="hud-head" id="sysToggle" type="button" title="Свернуть/развернуть">
+      <span class="hud-dot" id="sysDot"></span>
+      <span class="hud-title">Нагрузка</span>
+      <span class="hud-chip" id="sysHw">GPU</span>
+      <span class="hud-chevron">▾</span>
+    </button>
+    <div class="hud-body" id="sysBody">
+      <div class="sys-row">
+        <span class="sys-label">CPU</span>
+        <span class="sys-bar"><i id="sysCpuBar" style="width:0%"></i></span>
+        <b class="sys-val" id="sysCpuVal">—</b>
+      </div>
+      <div class="sys-row">
+        <span class="sys-label">RAM</span>
+        <span class="sys-bar"><i id="sysRamBar" style="width:0%"></i></span>
+        <b class="sys-val" id="sysRamVal">—</b>
+      </div>
+      <div class="sys-row">
+        <span class="sys-label">GPU</span>
+        <span class="sys-bar"><i id="sysGpuBar" style="width:0%"></i></span>
+        <b class="sys-val" id="sysGpuVal">—</b>
+      </div>
+      <div class="hud-foot">
+        <span id="sysRamText">—</span>
+        <span id="sysJob" class="hud-job"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="modal"></div>
+  <div id="toasts"></div>
+  <input type="file" id="fileInput" accept="video/*" class="hidden" />
+  <input type="file" id="fontInput" accept=".ttf,.otf,font/ttf,font/otf" class="hidden" />
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

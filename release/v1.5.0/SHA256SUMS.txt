@@ -1,0 +1,4 @@
+853498f1b079f93e17b5fabdcfd6d67429efd1e1e2e1237bf927fd2654a61272  ViralCut-1.5.0-macOS-arm64.zip
+a9eae41926cd71d32fdfe6cbd188ab475742ab0e925eb63d7d13f09cd0a7dc46  ViralCut-1.5.0.dmg
+6ffa100ec50483f539fa41be8572a900f3be32979bff56895d3775fd7ab63f74  ViralCut-1.5.0-source.zip
+a9ae55ffbf88f69bc5928dd43dfe3a408cb11ea19a431869278195e83a0469ee  ViralCut-1.5.0-windows-x64.zip

@@ -1,0 +1,138 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+# Минимальные права: запись в релиз нужна только джобе release.
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    name: Windows 10/11 x64
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements-desktop.txt pyinstaller
+
+      - name: Download Whisper model
+        shell: pwsh
+        run: |
+          python -c "from huggingface_hub import snapshot_download; snapshot_download('Systran/faster-whisper-small', local_dir='build/whisper-small', allow_patterns=['model.bin','config.json','tokenizer.json','vocabulary.txt'])"
+          $expected = "3e305921506d8872816023e4c273e75d2419fb89b24da97b4fe7bce14170d671"
+          $actual = (Get-FileHash build\whisper-small\model.bin -Algorithm SHA256).Hash.ToLower()
+          if ($actual -ne $expected) { throw "Модель Whisper не совпала по sha256: $actual" }
+          Write-Host "Модель Whisper: sha256 совпал"
+
+      - name: Version
+        id: version
+        shell: pwsh
+        run: |
+          $v = python tools/version.py
+          "value=$v" >> $env:GITHUB_OUTPUT
+
+      - name: Unit tests (затронутые изменениями)
+        run: >-
+          python -m unittest
+          tests.test_analyze tests.test_render tests.test_cut_pauses
+          tests.test_reactions tests.test_ytdlp_ffmpeg tests.test_diagnostics
+          tests.test_monitor -v
+
+      # Полный набор — сигнал, а не блокер: на Windows могут всплыть
+      # платформенные мелочи, но артефакт для теста всё равно нужен.
+      - name: Full suite (не блокирует сборку)
+        continue-on-error: true
+        run: python -m unittest discover -s tests -t . -v
+
+      - name: Build
+        run: pyinstaller ViralCut.spec --noconfirm --clean
+
+      - name: Smoke test (headless HTTP)
+        shell: pwsh
+        run: |
+          $env:VIRALCUT_HEADLESS = "1"
+          $env:VIRALCUT_DATA = "$env:RUNNER_TEMP\vc-smoke"
+          $env:VIRALCUT_PORT = "8799"
+          $proc = Start-Process -FilePath "dist\ViralCut\ViralCut.exe" -PassThru
+          try {
+            $base = "http://127.0.0.1:8799"
+            $ok = $false
+            for ($i = 0; $i -lt 80; $i++) {
+              Start-Sleep -Milliseconds 500
+              try {
+                $r = Invoke-WebRequest -UseBasicParsing "$base/api/health" -TimeoutSec 2
+                if ($r.StatusCode -eq 200) { $ok = $true; break }
+              } catch { }
+            }
+            if (-not $ok) { throw "Приложение не ответило на /api/health" }
+
+            # /api/system читает PDH-счётчики GPU. Раньше этот путь не проверялся
+            # на реальной Windows — именно здесь мог падать процесс мониторинга.
+            for ($i = 0; $i -lt 3; $i++) {
+              $sys = Invoke-RestMethod "$base/api/system" -TimeoutSec 5
+              if ($null -eq $sys.gpu) { throw "/api/system вернул ответ без поля gpu" }
+              Write-Host ("GPU: {0} | источник: {1} | {2}%" -f $sys.gpu.name, $sys.gpu.source, $sys.gpu.percent)
+              Start-Sleep -Milliseconds 400
+            }
+
+            $diag = Invoke-RestMethod "$base/api/diagnostics?tail=5" -TimeoutSec 5
+            if (-not $diag.report) { throw "/api/diagnostics вернул пустой отчёт" }
+            Write-Host $diag.report
+          } finally {
+            if (Test-Path "$env:VIRALCUT_DATA\app.log") {
+              Write-Host "--- app.log (хвост) ---"
+              Get-Content "$env:VIRALCUT_DATA\app.log" -Tail 120
+            }
+            if ($proc -and -not $proc.HasExited) { Stop-Process -Id $proc.Id -Force }
+          }
+
+      - name: Package
+        shell: pwsh
+        run: Compress-Archive -Path dist\ViralCut -DestinationPath "ViralCut-${{ steps.version.outputs.value }}-windows-x64.zip"
+
+      - name: Checksums
+        shell: pwsh
+        run: |
+          $zip = Get-ChildItem "ViralCut-*-windows-x64.zip"
+          $hash = (Get-FileHash $zip.FullName -Algorithm SHA256).Hash.ToLower()
+          "$hash  $($zip.Name)" | Out-File -Encoding ascii SHA256SUMS-windows.txt
+          Get-Content SHA256SUMS-windows.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-zip
+          path: |
+            ViralCut-*-windows-x64.zip
+            SHA256SUMS-windows.txt
+
+  release:
+    name: GitHub Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Version
+        id: version
+        run: echo "value=$(python3 tools/version.py)" >> "$GITHUB_OUTPUT"
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/windows-zip/*
+          body_path: release/v${{ steps.version.outputs.value }}/RELEASE_NOTES.md
+          fail_on_unmatched_files: true

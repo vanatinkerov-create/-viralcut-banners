@@ -1,0 +1,4 @@
+4d190cd5bc43d8e6081db3fccfae1feb361f0f350c8b20fe1aca1dd781380945  ViralCut-1.4.1-macOS-arm64.zip
+bb9ab76c0ac8c10967b309ed5d3fbed5e9d638f034470f56e1591936ee6ed2e2  ViralCut-1.4.1.dmg
+e0e82ee1ba5a6c482cfd7484c0202745fd7aeaa159696a7b3bda9f3103ea2343  ViralCut-1.4.1-source.zip
+2153e30122e0720f267f6491e8fa60da7d455f14a33270c49dc8cc375c45f8a7  ViralCut-1.4.1-windows-x64.zip
